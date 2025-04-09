@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-04-09T19:40:12.466913",
+  "prompt": "we will build a software",
+  "response_length": 844,
+  "metrics": {
+    "model": "llama"
+  },
+  "analysis": {
+    "prompt_complexity": 5,
+    "response_complexity": 151,
+    "contains_code": false
+  }
+}

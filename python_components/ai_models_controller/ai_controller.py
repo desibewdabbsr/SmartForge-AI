@@ -108,27 +108,40 @@ class AIController:
         self.model_type = model_type
         logger.info(f"Model set to: {model_type}")
     
-    def _select_model(self, prompt: str) -> str:
-        """Select the best model for the given prompt if auto is selected"""
-        if self.model_type != "auto":
-            return self.model_type
+
+
+
+    def _select_model(self, message: str) -> str:
+        """
+        Select the most appropriate model based on message content
         
-        # Simple heuristic for model selection
-        available_models = list(self.controllers.keys())
-        if not available_models:
-            return "auto"  # No models available
+        This uses a simple keyword matching approach, but could be enhanced with
+        more sophisticated NLP techniques.
+        """
+        message_lower = message.lower()
         
-        if "code" in prompt.lower() and "deepseek" in available_models:
-            return "deepseek"  # DeepSeek is good for code
-        elif len(prompt.split()) > 50 and "mistral" in available_models:
-            return "mistral"   # Mistral for longer prompts
-        elif "cohere" in available_models:
-            return "cohere"    # Cohere for general queries
-        elif "cody" in available_models:
-            return "cody"      # Cody as another option
+        # Check for explicit model requests
+        if "use llama" in message_lower or "ask llama" in message_lower or "use mistral" in message_lower:
+            return "llama"
+        if "use deepseek" in message_lower or "ask deepseek" in message_lower:
+            return "deepseek"
+        if "use cohere" in message_lower or "ask cohere" in message_lower:
+            return "cohere"
         
-        # Return the first available model as fallback
-        return available_models[0]
+        # Check for code-related queries - prioritize DeepSeek
+        code_indicators = ['code', 'function', 'class', 'algorithm', 'programming', 'develop', 'script', 'api']
+        for indicator in code_indicators:
+            if indicator in message_lower:
+                return "deepseek" if "deepseek" in self.controllers else "llama"
+        
+        # Check for creative content - prioritize Cohere
+        creative_indicators = ['write', 'create', 'generate content', 'blog', 'article', 'story']
+        for indicator in creative_indicators:
+            if indicator in message_lower:
+                return "cohere" if "cohere" in self.controllers else "llama"
+        
+        # Default to Llama for general conversation
+        return "llama" if "llama" in self.controllers else next(iter(self.controllers.keys()))
     
     async def process_message(self, message: str) -> Dict[str, Any]:
         """Process a message using the selected AI model"""

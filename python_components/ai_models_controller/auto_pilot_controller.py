@@ -3,7 +3,9 @@ import os
 import json
 from typing import Dict, Any, List, Optional
 from .auto_controller import AutoController
-from .utils.logger import get_logger
+
+# Fix the import path to use the correct location
+from utils.logger import AdvancedLogger
 
 class AutoPilotController:
     """
@@ -17,7 +19,11 @@ class AutoPilotController:
     
     def __init__(self, auto_controller: AutoController, memory_manager=None):
         self.auto_controller = auto_controller
-        self.logger = get_logger(__name__)
+        
+        # Initialize logger
+        logger_manager = AdvancedLogger()
+        self.logger = logger_manager.get_logger("auto_pilot_controller")
+        
         self.memory_manager = memory_manager
         self.project_state = {
             "current_phase": 0,
@@ -32,32 +38,26 @@ class AutoPilotController:
         self.templates_dir = os.path.join(os.path.dirname(__file__), "templates")
         self._load_templates()
     
+
+
     def _load_templates(self):
         """Load instruction templates for the Auto-Pilot"""
-        self.templates = {}
-        try:
-            templates_path = os.path.join(self.templates_dir, "auto_pilot_templates.json")
-            if os.path.exists(templates_path):
-                with open(templates_path, "r") as f:
-                    self.templates = json.load(f)
-            else:
-                self.logger.warning(f"Templates file not found: {templates_path}")
-                # Create default templates
-                self.templates = {
-                    "project_initialization": "Create a detailed project plan with phases for {project_type} development.",
-                    "code_generation": "Generate code for {module_name} following these requirements: {requirements}",
-                    "code_review": "Review this code and suggest improvements: {code}",
-                    "testing": "Write unit tests for this code: {code}",
-                    "documentation": "Create documentation for {module_name} with these specifications: {specifications}",
-                    "error_resolution": "Debug and fix this error: {error_message} in code: {code}"
-                }
-                # Save default templates
-                os.makedirs(self.templates_dir, exist_ok=True)
-                with open(templates_path, "w") as f:
-                    json.dump(self.templates, f, indent=2)
-        except Exception as e:
-            self.logger.error(f"Error loading templates: {str(e)}")
-    
+        # Define default templates directly in the code
+        self.templates = {
+            "project_initialization": "Create a detailed project plan with phases for {project_type} development.",
+            "code_generation": "Generate code for {module_name} following these requirements: {requirements}",
+            "code_review": "Review this code and suggest improvements: {code}",
+            "testing": "Write unit tests for this code: {code}",
+            "documentation": "Create documentation for {module_name} with these specifications: {specifications}",
+            "error_resolution": "Debug and fix this error: {error_message} in code: {code}"
+        }
+        
+        # Log that templates were loaded
+        self.logger.info("Auto-Pilot templates loaded successfully")
+
+
+
+
     async def start_auto_pilot(self, project_requirements: str) -> Dict[str, Any]:
         """
         Start the Auto-Pilot process for a new project
@@ -355,3 +355,26 @@ class AutoPilotController:
         if code_match:
             return code_match.group(1)
         return text
+    
+
+
+    def update_templates(self, new_templates: Dict[str, str]) -> None:
+        """
+        Update the templates used by the Auto-Pilot
+        
+        Args:
+            new_templates: Dictionary of template names and their content
+        """
+        # Update templates
+        for key, value in new_templates.items():
+            self.templates[key] = value
+        
+        # Save updated templates
+        try:
+            templates_path = os.path.join(self.templates_dir, "auto_pilot_templates.json")
+            os.makedirs(self.templates_dir, exist_ok=True)
+            with open(templates_path, "w") as f:
+                json.dump(self.templates, f, indent=2)
+            self.logger.info("Templates updated and saved successfully")
+        except Exception as e:
+            self.logger.error(f"Error saving updated templates: {str(e)}")
