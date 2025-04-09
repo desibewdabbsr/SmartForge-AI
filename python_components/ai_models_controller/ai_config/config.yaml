@@ -1,0 +1,15 @@
+# AI Configuration
+ai:
+  cohere:
+    api_key: "Iit61crv19hvn8saKns5mWdqVin2ExICRufkO67v"
+    model: "command"
+  cody:
+    api_key: "sgp_fd1b4edb60bf82b8_1b368aba616345f332d45b9a0c199a19ac090231"
+    model: "cody"
+  local:
+    mistral:
+      enabled: true
+      path: "models/mistral-7b.gguf"
+    deepseek:
+      enabled: true
+      path: "models/deepseek-coder-1.3b"

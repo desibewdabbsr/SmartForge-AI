@@ -1,0 +1,49 @@
+.ai-response {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.response-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.model-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.model-emoji {
+  font-size: 18px;
+}
+
+.model-name {
+  font-size: 14px;
+}
+
+.response-content {
+  color: #FFFFFF;
+  line-height: 1.5;
+}
+
+.response-content p {
+  margin-bottom: 12px;
+}
+
+.response-content .list-item {
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.response-content code {
+  background-color: rgba(255, 111, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  color: #FF6F00;
+}

@@ -1,0 +1,39 @@
+/**
+ * Drag Handle Styles
+ * 
+ * Styling for resizable dividers
+ */
+
+/* Base drag handle */
+.drag-handle {
+  position: absolute;
+  z-index: 15;
+  transition: background-color 0.2s;
+}
+
+/* Vertical drag handle */
+.drag-handle.vertical {
+  top: 0;
+  width: 6px;
+  height: 98%;
+  margin-left: -3px;
+  cursor: col-resize;
+}
+
+/* Horizontal drag handle */
+.drag-handle.horizontal {
+  width: 60%;
+  height: 6px;
+  margin-top: -3px;
+  cursor: row-resize;
+}
+
+/* Handle appearance when dragging */
+.drag-handle.dragging {
+  background-color: #FF6F00; /* Saffron color when active */
+}
+
+/* Handle hover effect */
+.drag-handle:hover {
+  background-color: #FF6F00; /* Semi-transparent gold */
+}

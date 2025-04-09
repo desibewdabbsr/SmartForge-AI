@@ -1,0 +1,76 @@
+.workspace-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.workspace-content {
+  flex: 1;
+  overflow: auto;
+  /* Saffron scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #FF6F00 transparent;
+}
+
+.workspace-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.workspace-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workspace-content::-webkit-scrollbar-thumb {
+  background-color: #FF6F00;
+  border-radius: 4px;
+}
+
+.workspace3-content-wrapper {
+  display: flex;
+  height: 100%;
+  position: relative;
+}
+
+.workspace3-content {
+  overflow: auto;
+  height: 100%;
+  /* Saffron scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #FF6F00 transparent;
+}
+
+.workspace3-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.workspace3-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workspace3-content::-webkit-scrollbar-thumb {
+  background-color: #FF6F00;
+  border-radius: 4px;
+}
+
+
+/* Update workspace3 tab container size */
+.workspace3-tabs-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 80px; /* Fixed width */
+  overflow: hidden;
+  border-left: 2px solid #FFD700;
+}
+
+
+/* Ensure workspace3 content has correct width */
+.workspace3-content {
+  width: calc(100% - 80px);
+  height: 100%;
+  overflow: auto;
+} 

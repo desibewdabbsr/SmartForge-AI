@@ -1,0 +1,146 @@
+.tab-manager {
+  background-color: #444444;
+  border-bottom: 1px solid #FFD700;
+}
+
+.tab-manager.horizontal {
+  width: 100%;
+  height: 28px;
+
+}
+
+.tab-manager.vertical {
+  width: 80px; /* Initial width for vertical tab manager */
+  height: 100%;
+  flex-direction: column;
+  border-bottom: none;
+  border-left: 1px solid #FFD700;
+}
+
+.tabs-container {
+  display: flex;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #FF6F00 transparent;
+
+}
+
+.tabs-container.horizontal {
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tabs-container.vertical {
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tabs-container::-webkit-scrollbar {
+  height: 3px;
+  width: 3px;
+  background-color: #FF6F00;
+}
+
+.tabs-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabs-container::-webkit-scrollbar-thumb {
+  color: #e90000;
+}
+
+.workspace-tab {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border-right: #e90000 4px solid transparent;
+  color: #FF6F00;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tabs-container.horizontal .workspace-tab {
+  padding: 0 20px;
+  height: 100%;
+  border-bottom: 3px solid transparent;
+  border-right: 1px solid #FFD700; /* Add solid style for right border */
+  min-width: 80px; /* Ensure minimum width for tab content */
+}
+
+.tabs-container.horizontal .tab-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%; /* Allow title to use full tab width */
+}
+
+
+/* Vertical tab with bottom border */
+.tabs-container.vertical .workspace-tab {
+  padding: 6px 8px;
+  width: 100%;
+  border-left: 4px solid transparent;
+  border-bottom: 1px solid #FFD700; /* Add solid style for bottom border */
+  display: flex;
+  align-items: left;
+}
+
+
+.tabs-container.vertical .tab-title {
+  flex: 1;
+  min-width: 0; /* This is crucial for text-overflow to work */
+}
+
+.tabs-container.horizontal .workspace-tab.active {
+  color: #FFD700;
+  border-bottom-color: #FF6F00;
+  background-color: rgba(255, 111, 0, 0.1);
+}
+
+.tabs-container.vertical .workspace-tab.active {
+  color: #FFD700;
+  border-left-color: #FF6F00;
+  background-color: rgba(255, 111, 0, 0.1);
+}
+
+.workspace-tab:hover:not(.active) {
+  color: #FFFFFF;
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.tab-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 20px); /* Leave space for the close button */
+}
+
+
+
+.tab-close-button {
+  background: transparent;
+  border: none;
+  color: #AAAAAA;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.tab-close-button:hover {
+  color: #F44336; /* Red color on hover */
+  background-color: rgba(244, 67, 54, 0.1);
+}

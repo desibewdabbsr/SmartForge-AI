@@ -1,0 +1,224 @@
+/**
+ * Terminal Component Styles
+ * Dual-tab terminal with Problems and Command Line
+ */
+
+.terminal-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #1B1B1B;
+  color: #FFD700;
+  font-family: 'Manrope', sans-serif;
+  border: 1px solid #FFD700;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  background-color: #444444;
+  border-bottom: 1px solid #FFD700;
+  height: 28px; /* Match the input height */
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.terminal-control-button {
+  background-color: transparent;
+  border: none;
+  color: #FFD700;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 5px;
+  transition: all 0.2s ease;
+}
+
+.terminal-control-button:hover {
+  color: #FF6F00;
+}
+
+.terminal-tabs {
+  display: flex;
+  height: 100%;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #AAAAAA;
+  cursor: pointer;
+  font-size: 12px;
+  height: 100%;
+  transition: all 0.2s ease;
+}
+
+.terminal-tab.active {
+  color: #FFD700;
+  border-bottom-color: #FF6F00; /* Saffron border for active tab */
+  background-color: rgba(255, 111, 0, 0.1); /* Subtle saffron background */
+}
+
+.terminal-tab:hover:not(.active) {
+  color: #FFFFFF;
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.tab-counts {
+  display: flex;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.error-count {
+  color: #F44336; /* Red for errors */
+}
+
+.warning-count {
+  color: #FFC107; /* Amber for warnings */
+}
+
+.info-count {
+  color: #4CAF50; /* Green for info */
+}
+
+.terminal-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #FF6F00 transparent;
+}
+
+.terminal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-content::-webkit-scrollbar-thumb {
+  background-color: #FF6F00;
+  border-radius: 0;
+}
+
+/* Problems tab styles */
+.problems-content {
+  padding: 5px 0;
+}
+
+.problem-line {
+  display: flex;
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  cursor: pointer;
+}
+
+.problem-line:hover {
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.problem-line.error .problem-message {
+  color: #F44336; /* Red for errors */
+}
+
+.problem-line.warning .problem-message {
+  color: #FFC107; /* Amber for warnings */
+}
+
+.problem-line.info .problem-message {
+  color: #4CAF50; /* Green for info */
+}
+
+.problem-icon {
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.problem-content {
+  flex: 1;
+}
+
+.problem-message {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.problem-location {
+  font-size: 12px;
+  color: #AAAAAA;
+}
+
+.no-problems {
+  padding: 10px;
+  text-align: center;
+  color: #AAAAAA;
+  font-style: italic;
+}
+
+/* Terminal tab styles */
+.terminal-output {
+  padding: 10px;
+}
+
+.terminal-line {
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminal-line.command {
+  color: #FF6F00; /* Saffron for commands */
+  font-weight: bold;
+}
+
+.terminal-line.output {
+  color: #FFD700; /* Gold for output */
+}
+
+.terminal-line.error {
+  color: #F44336; /* Red for errors */
+}
+
+.terminal-line.info {
+  color: #4CAF50; /* Green for info */
+}
+
+.terminal-input-form {
+  padding: 0 10px;
+  background-color: #2E2E2E;
+  border-top: 1px solid #FFD700;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.terminal-prompt {
+  color: #FF6F00;
+  margin-right: 5px;
+  font-weight: bold;
+}
+
+.terminal-input {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  color: #FFD700;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  outline: none;
+  height: 100%;
+}
+
+.terminal-input::placeholder {
+  color: rgba(255, 215, 0, 0.5);
+}

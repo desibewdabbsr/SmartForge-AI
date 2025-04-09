@@ -1,0 +1,141 @@
+Terminal/console output (for the bottom right panel)
+Code generation panel (for the top right panel) Done
+File browser/editor (for either the middle or right panel)
+Process status panel (could be integrated into the notification bar)
+
+
+
+
+
+// This would be implemented when backend integration is ready
+async function getLocalMachineName() {
+  try {
+    const response = await fetch('/api/system/hostname');
+    const data = await response.json();
+    return data.hostname;
+  } catch (error) {
+    console.error('Failed to fetch hostname:', error);
+    return 'LocalMachine132'; // Fallback name
+  }
+}
+
+// Then update appConfig to use this
+
+
+
+
+
+
+Recommended Approach:
+Create a new, streamlined dashboard with only the essential components:
+
+AI chat panel
+Code generation panel
+Terminal/console output
+File browser/editor
+Process status panel
+Implement a simplified AI controller that works reliably with:
+
+Basic prompt handling
+Simple hardcoded templates for different use cases
+Clear interface for model selection
+Add components incrementally:
+
+Start with the core functionality working reliably
+Add one feature at a time, testing thoroughly
+Integrate more advanced templates as you go
+
+
+5B90-12C7
+
+SmartForge-AI/
+│
+├── frontend/
+│   ├── components/           # React components
+│   ├── styles/               # CSS/SCSS files
+│   ├── hooks/                # React hooks
+│   ├── context/              # React context providers
+│   ├── utils/                # Frontend utility functions
+│   ├── pages/                # Page components
+│   ├── public/               # Static assets
+│   └── tests/                # Frontend tests
+│
+├── backend/
+│   ├── api/                  # API routes and handlers
+│   │   ├── routes/           # API route definitions
+│   │   └── controllers/      # API controllers
+│   │
+│   ├── core/                 # Core backend functionality
+│   │   ├── ai/               # AI integration
+│   │   │   ├── models/       # AI model interfaces
+│   │   │   ├── templates/    # Prompt templates
+│   │   │   └── services/     # AI services
+│   │   │
+│   │   ├── blockchain/       # Blockchain integration
+│   │   │   ├── ethereum/     # Ethereum-specific code
+│   │   │   ├── solana/       # Solana-specific code
+│   │   │   └── utils/        # Blockchain utilities
+│   │   │
+│   │   ├── file/             # File management
+│   │   │   ├── storage/      # File storage services
+│   │   │   └── generators/   # File generators
+│   │   │
+│   │   └── security/         # Security services
+│   │
+│   ├── services/             # Application services
+│   │   ├── project/          # Project management
+│   │   ├── user/             # User management
+│   │   └── analytics/        # Analytics services
+│   │
+│   ├── utils/                # Backend utilities
+│   │   ├── logging/          # Logging utilities
+│   │   ├── config/           # Configuration utilities
+│   │   └── validation/       # Validation utilities
+│   │
+│   └── tests/                # Backend tests
+│       ├── unit/             # Unit tests
+│       ├── integration/      # Integration tests
+│       └── e2e/              # End-to-end tests
+│
+├── shared/                   # Shared code between frontend and backend
+│   ├── types/                # TypeScript type definitions
+│   ├── constants/            # Shared constants
+│   └── utils/                # Shared utilities
+│
+├── tools/                    # Development and build tools
+│   ├── scripts/              # Build and deployment scripts
+│   └── templates/            # Project templates
+│
+├── vscode-extension/         # VS Code extension
+│   ├── src/                  # Extension source code
+│   │   ├── commands/         # Extension commands
+│   │   ├── providers/        # Extension providers
+│   │   ├── services/         # Extension services
+│   │   └── utils/            # Extension utilities
+│   │
+│   ├── webview/              # Webview UI
+│   │   ├── components/       # Webview components
+│   │   └── styles/           # Webview styles
+│   │
+│   └── tests/                # Extension tests
+│
+├── docs/                     # Documentation
+│   ├── api/                  # API documentation
+│   ├── user/                 # User documentation
+│   └── developer/            # Developer documentation
+│
+├── config/                   # Configuration files
+│   ├── default.json          # Default configuration
+│   ├── development.json      # Development configuration
+│   └── production.json       # Production configuration
+│
+├── .github/                  # GitHub configuration
+│   └── workflows/            # GitHub Actions workflows
+│
+├── .vscode/                  # VS Code configuration
+├── .gitignore                # Git ignore file
+├── package.json              # Project package.json
+├── tsconfig.json             # TypeScript configuration
+├── README.md                 # Project README
+└── LICENSE                   # Project license
+

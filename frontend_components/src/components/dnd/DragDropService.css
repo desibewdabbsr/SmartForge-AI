@@ -1,0 +1,40 @@
+/* Drag and Drop Styles */
+
+.draggable-service {
+  cursor: grab;
+  user-select: none;
+}
+
+.draggable-service.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
+.droppable-workspace {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.droppable-workspace.drop-active {
+  outline: 2px dashed #FF6F00;
+  outline-offset: -2px;
+  background-color: rgba(255, 111, 0, 0.1);
+}
+
+.service-drag-image {
+  position: fixed;
+  top: -1000px;
+  left: -1000px;
+  width: 30px;
+  height: 30px;
+  background-color: #444444;
+  border: 1px solid #FFD700;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFD700;
+  font-size: 18px;
+  z-index: 9999;
+}

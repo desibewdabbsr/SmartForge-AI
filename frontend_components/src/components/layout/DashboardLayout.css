@@ -1,0 +1,136 @@
+/**
+ * Dashboard Layout Styles
+ * 
+ * Clean grid-based layout with precise measurements
+ */
+
+/* Reset default margins and padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Main container */
+.dashboard-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: #1B1B1B; /* Deep Charcoal background */
+  color: white;
+  font-family: 'Manrope', sans-serif;
+  overflow: hidden;
+}
+
+/* Edge border - surrounds the entire layout */
+.edge-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid #FFD700; /* Gold border */
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Vertical divider 1 - at 3% from left */
+.v-divider-1 {
+  position: absolute;
+  top: 0;
+  left: 3%;
+  width: 1px;
+  height: 98%; /* Stops at notification bar */
+  background-color: #FFD700; /* Gold divider */
+  z-index: 5;
+}
+
+/* Vertical divider 2 - at 40% from left */
+.v-divider-2 {
+  position: absolute;
+  top: 0;
+  left: 40%;
+  width: 1px;
+  height: 98%; /* Stops at notification bar */
+  background-color: #FFD700; /* Gold divider */
+  z-index: 5;
+}
+
+/* Horizontal divider - splits right section */
+.h-divider {
+  position: absolute;
+  top: 60%;
+  left: 40%;
+  width: 60%;
+  height: 1px;
+  background-color: #FFD700; /* Gold divider */
+  z-index: 5;
+}
+
+/* Bottom horizontal divider - above notification bar */
+.bottom-divider {
+  position: absolute;
+  bottom: 2%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #FFD700; /* Gold divider */
+  z-index: 5;
+}
+
+/* Service menu - leftmost panel (3% width) */
+.service-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3%;
+  height: 98%;
+  overflow-y: auto;
+}
+
+/* Workspace 1 - middle panel (37% width) */
+.workspace-1 {
+  position: absolute;
+  top: 0;
+  left: 3%;
+  width: 37%;
+  height: 98%;
+  overflow-y: auto;
+}
+
+/* Workspace 2 - top right panel */
+.workspace-2 {
+  position: absolute;
+  top: 0;
+  left: 40%;
+  width: 60%;
+  height: 60%;
+  overflow-y: auto;
+}
+
+/* Workspace 3 - bottom right panel */
+.workspace-3 {
+  position: absolute;
+  top: 60%;
+  left: 40%;
+  width: 60%;
+  height: 38%;
+  overflow-y: auto;
+}
+
+/* Notification bar at the bottom */
+.notification-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2%;
+  background-color: #444444; /* Charcoal Grey */
+  color: #FFD700; /* Gold text */
+}
