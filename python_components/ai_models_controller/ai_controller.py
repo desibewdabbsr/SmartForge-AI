@@ -1,18 +1,31 @@
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
+# Add the parent directory to the Python path for absolute imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 # Import memory manager and code generator
-from core.ai_integration.memory_manager import MemoryManager
-from core.ai_integration.code_generator import CodeGenerator
+try:
+    from core.ai_integration.memory_manager import MemoryManager
+    from core.ai_integration.code_generator import CodeGenerator
+    memory_imports_successful = True
+except ImportError as e:
+    print(f"Warning: Could not import memory manager or code generator: {e}")
+    memory_imports_successful = False
 
 # Import advanced logger
-from utils.logger import AdvancedLogger
-
-# Set up logging
-logger_manager = AdvancedLogger()
-logger = logger_manager.get_logger("ai_controller")
+try:
+    from utils.logger import AdvancedLogger
+    # Set up logging
+    logger_manager = AdvancedLogger()
+    logger = logger_manager.get_logger("ai_controller")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("ai_controller")
 
 class AIController:
     """
@@ -32,20 +45,25 @@ class AIController:
         self.repositories_path.mkdir(parents=True, exist_ok=True)
         
         # Initialize memory manager
-        try:
-            self.memory_manager = MemoryManager(self.brain_path)
-            logger.info("Memory manager initialized")
-        except Exception as e:
-            logger.warning(f"Failed to initialize memory manager: {e}")
+        if memory_imports_successful:
+            try:
+                self.memory_manager = MemoryManager(self.brain_path)
+                logger.info("Memory manager initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize memory manager: {e}")
+                self.memory_manager = None
+                
+            # Initialize code generator
+            try:
+                self.code_generator = CodeGenerator()
+                logger.info("Code generator initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize code generator: {e}")
+                self.code_generator = None
+        else:
             self.memory_manager = None
-            
-        # Initialize code generator
-        try:
-            self.code_generator = CodeGenerator()
-            logger.info("Code generator initialized")
-        except Exception as e:
-            logger.warning(f"Failed to initialize code generator: {e}")
             self.code_generator = None
+            logger.warning("Memory manager and code generator imports failed")
         
         # Load config using ConfigManager
         try:
@@ -56,6 +74,7 @@ class AIController:
         except Exception as e:
             logger.warning(f"Could not load ConfigManager: {e}")
             self.config = {}
+    
     
     def register_controller(self, name: str, controller: Any) -> None:
         """Register an AI controller"""

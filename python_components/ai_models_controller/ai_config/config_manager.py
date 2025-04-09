@@ -1,81 +1,57 @@
-import yaml
 import os
-from pathlib import Path
-from typing import Dict, Any, Optional
+import yaml
+import logging
+
+logger = logging.getLogger("ConfigManager")
 
 class ConfigManager:
-    def __init__(self, config_path: Optional[str] = None):
-        self.config_path = config_path or self._find_config_path()
-        self.config = self._load_config()
+    def __init__(self, config_path=None):
+        self.config = {}
         
-    def _find_config_path(self) -> str:
-        """Find the config file in standard locations"""
-        # Try current directory
-        if os.path.exists("config.yaml"):
-            return "config.yaml"
+        # Define possible config file locations
+        if config_path is None:
+            possible_paths = [
+                "./config.yaml",  # Current directory
+                os.path.join(os.path.dirname(__file__), "config.yaml"),  # ai_config directory
+                os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.yaml"),  # ai_models_controller directory
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "config.yaml"),  # python_components/config directory
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "config", "config.yaml")  # project root/config directory
+            ]
             
-        # Try src directory
-        if os.path.exists("./config.yaml"):
-            return "./config.yaml"
-            
-        # Try parent directory
-        if os.path.exists("../config.yaml"):
-            return "../config.yaml"
-            
-        # Default to src/config.yaml even if it doesn't exist
-        return "./config.yaml"
+            # Try each path until we find a valid config file
+            for path in possible_paths:
+                if os.path.exists(path):
+                    config_path = path
+                    break
         
-    def _load_config(self) -> Dict[str, Any]:
+        self.config_path = config_path
+        self.load_config()
+    
+    def load_config(self):
         """Load configuration from YAML file"""
         try:
-            if os.path.exists(self.config_path):
-                with open(self.config_path, 'r') as f:
-                    return yaml.safe_load(f)
+            if self.config_path and os.path.exists(self.config_path):
+                with open(self.config_path, 'r') as file:
+                    self.config = yaml.safe_load(file)
+                logger.info(f"Configuration loaded successfully from {self.config_path}")
             else:
-                print(f"Config file not found at {self.config_path}")
-                return {}
+                logger.warning(f"Config file not found at {self.config_path}")
         except Exception as e:
-            print(f"Error loading config: {e}")
-            return {}
-
-
-
-    def get_config(self) -> Dict[str, Any]:
-        """Get the entire configuration dictionary"""
+            logger.error(f"Error loading configuration: {e}")
+    
+    def get_config(self):
+        """Get the loaded configuration"""
         return self.config
-
-
-    def get_api_key(self, service: str) -> Optional[str]:
-        """Get API key for a specific service"""
-        try:
-            # Print debug info
-            print(f"Looking for API key for service: {service}")
-            print(f"Config path: {self.config_path}")
-            print(f"Config loaded: {bool(self.config)}")
-            
-            if not self.config:
-                return None
-                
-            # Check if 'ai' section exists
-            if 'ai' not in self.config:
-                print("No 'ai' section found in config")
-                return None
-                
-            # Check if service exists in ai section
-            if service not in self.config['ai']:
-                print(f"No '{service}' section found in config['ai']")
-                return None
-                
-            # Get API key
-            api_key = self.config['ai'][service].get('api_key')
-            
-            if not api_key:
-                print(f"No API key found for {service}")
-                return None
-                
-            print(f"Found API key for {service}: {api_key[:5]}...{api_key[-5:]}")
-            return api_key
-            
-        except Exception as e:
-            print(f"Error getting API key for {service}: {e}")
-            return None
+    
+    def get_value(self, key_path, default=None):
+        """Get a value from the configuration using dot notation"""
+        keys = key_path.split('.')
+        value = self.config
+        
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return default
+        
+        return value

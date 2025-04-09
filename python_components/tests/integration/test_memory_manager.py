@@ -135,4 +135,4 @@ class TestMemoryManager:
         assert len(memory_manager.get_interaction_history()) > 0
 
 
-# pytest tests/integration/llama/test_memory_manager.py -v
+# pytest tests/integration/

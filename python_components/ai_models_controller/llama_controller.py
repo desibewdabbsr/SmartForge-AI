@@ -43,7 +43,15 @@ class SafeDict(dict):
 
 class LlamaController:
     def __init__(self, model_path: Optional[str] = None):
-        self.model_path = model_path or os.path.join("models", "mistral-7b.gguf")
+        # Look for the model in the project root directory first, then in the python_components directory
+        if model_path is None:
+            root_model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "models", "mistral-7b.gguf")
+            if os.path.exists(root_model_path):
+                model_path = root_model_path
+            else:
+                model_path = os.path.join("models", "mistral-7b.gguf")
+        
+        self.model_path = model_path
         self.llm = None
         self.initialized = False
         self._initialize_model()
