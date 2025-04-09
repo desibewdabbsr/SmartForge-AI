@@ -3,6 +3,15 @@ import asyncio
 import aiohttp
 import logging
 from typing import Dict, Any, Optional
+import logging
+from utils.logger import AdvancedLogger
+
+# Set up logging
+logger_manager = AdvancedLogger()
+logger = logger_manager.get_logger("cohere_controller")
+
+
+
 
 class CohereController:
     def __init__(self, api_key: str):
@@ -40,3 +49,15 @@ class CohereController:
     async def process_command(self, message: str) -> str:
         """Process a command using Cohere API - compatible with other controllers"""
         return await self.generate_response(message)
+
+
+
+
+    async def process_message(self, message: str) -> Dict[str, Any]:
+        """Process a message and return a structured response"""
+        try:
+            response_text = await self.process_command(message)
+            return {"content": response_text}
+        except Exception as e:
+            logger.error(f"Error processing message with Cohere: {str(e)}")
+            return {"content": f"Error: {str(e)}", "error": str(e)}

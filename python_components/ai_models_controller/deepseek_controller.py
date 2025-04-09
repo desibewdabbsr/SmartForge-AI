@@ -3,6 +3,14 @@ import json
 import os
 from typing import Optional, Dict, Any
 import logging
+import logging
+from utils.logger import AdvancedLogger
+
+# Set up logging
+logger_manager = AdvancedLogger()
+logger = logger_manager.get_logger("deepseek_controller")
+
+
 
 class DeepSeekController:
     def __init__(self, model_name: str = "deepseek-coder:1.3b"):
@@ -66,3 +74,13 @@ class DeepSeekController:
             error_msg = f"Error processing command with DeepSeek: {str(e)}"
             print(error_msg)
             return "I'm having trouble generating a response with the DeepSeek model. Please try again."
+        
+
+    async def process_message(self, message: str) -> Dict[str, Any]:
+        """Process a message and return a structured response"""
+        try:
+            response_text = await self.process_command(message)
+            return {"content": response_text}
+        except Exception as e:
+            logger.error(f"Error processing message with DeepSeek: {str(e)}")
+            return {"content": f"Error: {str(e)}", "error": str(e)}
