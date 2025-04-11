@@ -15,6 +15,10 @@ from ai_models_controller.deepseek_controller import DeepSeekController
 from ai_models_controller.cohere_controller import CohereController
 from ai_models_controller.ai_controller import AIController
 
+
+# aUTO PILOT controller.
+from ai_models_controller.auto_pilot_controller import AutoPilotController
+
 # Import config manager
 from ai_models_controller.ai_config.config_manager import ConfigManager
 
@@ -39,8 +43,13 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Use eventlet for better compatibility with Socket.io
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
-
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*", 
+    async_mode='eventlet',
+    ping_timeout=60,
+    ping_interval=25
+)
 
 # Load configuration
 try:
@@ -79,6 +88,17 @@ try:
     })
 except Exception as e:
     logger.error(f"Error initializing controllers: {e}")
+
+
+# Initialize Auto-Pilot controller
+try:
+    auto_pilot_controller = AutoPilotController(ai_controller)
+    logger.info("Auto-Pilot controller initialized")
+except Exception as e:
+    logger.error(f"Error initializing Auto-Pilot controller: {e}")
+    auto_pilot_controller = None
+
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -232,6 +252,14 @@ async def process_message():
         })
         return jsonify({'error': str(e)}), 500
 
+
+
+
+
+
+
+
+
 @app.route('/api/generate', methods=['POST'])
 async def generate_code():
     """Generate code with the specified AI model"""
@@ -296,26 +324,50 @@ async def generate_code():
         # Create timestamp for unique file naming
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        # Create a file path for the generated code
+        # Create absolute paths for the directory and file
+        base_dir = os.path.abspath('.Repositories')
+        dir_path = os.path.join(base_dir, f'generated_{timestamp}')
         file_name = f"generated_code_{timestamp}{file_ext}"
-        dir_path = os.path.join('.Repositories', f'generated_{timestamp}')
         file_path = os.path.join(dir_path, file_name)
         
-        # Ensure directory exists
-        os.makedirs(dir_path, exist_ok=True)
+        # Ensure base directory exists
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir, exist_ok=True)
+            logger.info(f"Created base directory: {base_dir}")
         
-        # Save the file
+        # Ensure directory exists with explicit error handling
+        try:
+            os.makedirs(dir_path, exist_ok=True)
+            logger.info(f"Created directory: {dir_path}")
+        except Exception as e:
+            logger.error(f"Error creating directory {dir_path}: {str(e)}")
+            socketio.emit('process_update', {
+                'type': 'error',
+                'message': f'Error creating directory: {str(e)}',
+                'timestamp': datetime.now().strftime('%I:%M:%S %p')
+            })
+        
+        # Save the file with explicit error handling
         try:
             with open(file_path, 'w') as f:
                 f.write(code_content)
             logger.info(f'Saved generated code to {file_path}')
         except Exception as e:
-            logger.error(f"Error saving file: {str(e)}")
+            logger.error(f"Error saving file {file_path}: {str(e)}")
             socketio.emit('process_update', {
                 'type': 'error',
                 'message': f'Error saving file: {str(e)}',
                 'timestamp': datetime.now().strftime('%I:%M:%S %p')
             })
+            # Try to save to a fallback location
+            fallback_path = os.path.join(os.path.dirname(__file__), f'generated_code_{timestamp}{file_ext}')
+            try:
+                with open(fallback_path, 'w') as f:
+                    f.write(code_content)
+                logger.info(f'Saved generated code to fallback location: {fallback_path}')
+                file_path = fallback_path
+            except Exception as e2:
+                logger.error(f"Error saving to fallback location: {str(e2)}")
         
         # Emit file creation updates
         socketio.emit('process_update', {
@@ -339,6 +391,9 @@ async def generate_code():
             'timestamp': datetime.now().strftime('%I:%M:%S %p')
         })
         
+        # Add file path to response
+        response['file_path'] = file_path
+        
         return jsonify(response)
     except Exception as e:
         logger.error(f"Error generating code with {model}: {str(e)}")
@@ -348,6 +403,218 @@ async def generate_code():
             'timestamp': datetime.now().strftime('%I:%M:%S %p')
         })
         return jsonify({'error': str(e)}), 500
+
+
+
+
+
+@app.route('/api/autopilot/start', methods=['POST'])
+async def start_auto_pilot():
+    """Start Auto-Pilot with project requirements"""
+    try:
+        if not auto_pilot_controller:
+            return jsonify({'error': 'Auto-Pilot controller not available'}), 500
+        
+        data = request.json
+        requirements = data.get('requirements', '')
+        
+        if not requirements:
+            return jsonify({'error': 'No requirements provided'}), 400
+        
+        # Emit process update
+        socketio.emit('process_update', {
+            'type': 'process',
+            'message': 'Starting Auto-Pilot...',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        
+        # Start Auto-Pilot
+        result = await auto_pilot_controller.start_auto_pilot(requirements)
+        
+        # Emit process update
+        socketio.emit('process_update', {
+            'type': 'process',
+            'message': 'Auto-Pilot initialized',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error starting Auto-Pilot: {str(e)}")
+        socketio.emit('process_update', {
+            'type': 'error',
+            'message': f'Error starting Auto-Pilot: {str(e)}',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/api/autopilot/status', methods=['GET'])
+def get_auto_pilot_status():
+    """Get Auto-Pilot status"""
+    try:
+        if not auto_pilot_controller:
+            return jsonify({'error': 'Auto-Pilot controller not available'}), 500
+        
+        # Get project state
+        state = auto_pilot_controller.get_project_state()
+        
+        return jsonify({
+            'is_active': state.get('is_active', False),
+            'current_phase': state.get('current_phase', 0) + 1,  # 1-indexed for display
+            'total_phases': state.get('total_phases', 0),
+            'current_module': state.get('current_module', {}).get('name') if state.get('current_module') else None,
+            'completed_modules': state.get('completed_modules', []),
+            'errors': state.get('errors', [])
+        })
+    except Exception as e:
+        logger.error(f"Error getting Auto-Pilot status: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+@app.route('/api/autopilot/next', methods=['GET'])
+async def process_next_module():
+    """Process next module in Auto-Pilot"""
+    try:
+        if not auto_pilot_controller:
+            return jsonify({'error': 'Auto-Pilot controller not available'}), 500
+        
+        # Emit process update
+        socketio.emit('process_update', {
+            'type': 'process',
+            'message': 'Processing next module...',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        
+        # Process next module
+        result = await auto_pilot_controller.process_next_module()
+        
+        # If successful, emit code update
+        if result.get('status') == 'success' and 'code' in result:
+            # Determine file extension based on content
+            code_content = result.get('code', '')
+            file_ext = '.js'  # Default extension
+            
+            if 'pragma solidity' in code_content:
+                file_ext = '.sol'
+            elif 'def ' in code_content and ('import ' in code_content or '"""' in code_content):
+                file_ext = '.py'
+            elif '<html>' in code_content.lower():
+                file_ext = '.html'
+            elif 'class ' in code_content and '{' in code_content and '}' in code_content:
+                file_ext = '.java'
+            
+            # Create timestamp for unique file naming
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Create a file path for the generated code
+            module_name = result.get('module', 'module').lower().replace(' ', '_')
+            file_name = f"{module_name}_{timestamp}{file_ext}"
+            dir_path = os.path.join('.Repositories', f'autopilot_{timestamp}')
+            file_path = os.path.join(dir_path, file_name)
+            
+            # Ensure directory exists
+            os.makedirs(dir_path, exist_ok=True)
+            
+            # Save the file
+            try:
+                with open(file_path, 'w') as f:
+                    f.write(code_content)
+                logger.info(f'Saved generated code to {file_path}')
+            except Exception as e:
+                logger.error(f"Error saving file: {str(e)}")
+                socketio.emit('process_update', {
+                    'type': 'error',
+                    'message': f'Error saving file: {str(e)}',
+                    'timestamp': datetime.now().strftime('%I:%M:%S %p')
+                })
+            
+            # Emit file creation updates
+            socketio.emit('process_update', {
+                'type': 'file',
+                'message': f'Added file: {file_path}',
+                'path': file_path,
+                'timestamp': datetime.now().strftime('%I:%M:%S %p')
+            })
+            
+            # Emit code update
+            socketio.emit('process_update', {
+                'type': 'code',
+                'message': code_content,
+                'path': file_path,
+                'timestamp': datetime.now().strftime('%I:%M:%S %p')
+            })
+            
+            # Add file path to result
+            result['file_path'] = file_path
+        
+        # Emit process update
+        socketio.emit('process_update', {
+            'type': 'process',
+            'message': f"Module processing {result.get('status', 'completed')}",
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error processing next module: {str(e)}")
+        socketio.emit('process_update', {
+            'type': 'error',
+            'message': f'Error processing next module: {str(e)}',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@app.route('/api/autopilot/pause', methods=['POST'])
+def pause_auto_pilot():
+    """Pause Auto-Pilot"""
+    try:
+        if not auto_pilot_controller:
+            return jsonify({'error': 'Auto-Pilot controller not available'}), 500
+        
+        # Pause Auto-Pilot
+        result = auto_pilot_controller.pause_auto_pilot()
+        
+        # Emit process update
+        socketio.emit('process_update', {
+            'type': 'process',
+            'message': 'Auto-Pilot paused',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error pausing Auto-Pilot: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/autopilot/resume', methods=['POST'])
+def resume_auto_pilot():
+    """Resume Auto-Pilot"""
+    try:
+        if not auto_pilot_controller:
+            return jsonify({'error': 'Auto-Pilot controller not available'}), 500
+        
+        # Resume Auto-Pilot
+        result = auto_pilot_controller.resume_auto_pilot()
+        
+        # Emit process update
+        socketio.emit('process_update', {
+            'type': 'process',
+            'message': 'Auto-Pilot resumed',
+            'timestamp': datetime.now().strftime('%I:%M:%S %p')
+        })
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error resuming Auto-Pilot: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

@@ -58,3 +58,11 @@ logs/
 .DS_Store
 Thumbs.db
 python_components/venv/
+
+
+# Memory
+llama_brain/
+python_components/llama_brain/
+
+
+*.bk

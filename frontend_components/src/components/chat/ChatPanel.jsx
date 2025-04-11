@@ -140,8 +140,8 @@ const ChatPanel = () => {
     return model ? model.apiName : 'auto';
   };
 
-  // Handle send/process/stop
-  const handleSendOrStop = async () => {
+
+    const handleSendOrStop = async () => {
     if (isProcessing) {
       // Stop processing - would need to implement cancellation logic
       setIsProcessing(false);
@@ -159,22 +159,53 @@ const ChatPanel = () => {
       setResponses(prev => [...prev, userMessage]);
       
       try {
+        let response;
+        
         // Get the API model name
         const modelName = getApiModelName();
         
-        // Process the message with the selected model
-        const response = await apiService.processMessage(message, modelName);
+        if (isAutoPilot) {
+          // In Auto-Pilot mode, treat the message as a code generation request
+          // or as a command to the Auto-Pilot system
+          if (message.toLowerCase().includes('next module') || 
+              message.toLowerCase().includes('continue') ||
+              message.toLowerCase().includes('next step')) {
+            // Process next module command
+            response = await apiService.processNextModule();
+          } else if (message.toLowerCase().includes('status') ||
+                    message.toLowerCase().includes('progress')) {
+            // Get status command
+            response = await apiService.getAutoPilotStatus();
+          } else {
+            // Treat as code generation request
+            response = await apiService.generateCode(message, modelName);
+          }
+        } else {
+          // Normal mode - process message with the selected model
+          response = await apiService.processMessage(message, modelName);
+        }
         
         // Add AI response to responses
-
         const aiResponse = {
           type: 'ai',
-          content: response.content || response.error || 'No response received',
+          content: response.content || response.response || response.error || 'No response received',
           model: response.model || modelName,
           timestamp: new Date().toISOString()
         };
-
+        
         setResponses(prev => [...prev, aiResponse]);
+        
+        // If we received code, also add it as a separate message
+        if (response.code) {
+          const codeResponse = {
+            type: 'ai',
+            content: `\`\`\`\n${response.code}\n\`\`\``,
+            model: response.model || modelName,
+            timestamp: new Date().toISOString()
+          };
+          
+          setResponses(prev => [...prev, codeResponse]);
+        }
       } catch (error) {
         console.error('Error processing message:', error);
         

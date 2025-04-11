@@ -8,38 +8,54 @@ class ApiService {
     this.socket = null;
   }
 
+
+
   /**
    * Initialize the socket connection
    */
   initSocket() {
     if (!this.socket && typeof io !== 'undefined') {
       console.log('Initializing socket connection...');
-      this.socket = io('http://localhost:5000');
+      
+      // Add connection options for better reliability
+      const options = {
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 60000,  // Increased timeout
+        transports: ['polling', 'websocket']  // Try polling first, then websocket
+      };
+      
+      this.socket = io('http://localhost:5000', options);
       
       this.socket.on('connect', () => {
         console.log('Socket connected successfully');
-        // Emit a global event that other components can listen for
         document.dispatchEvent(new CustomEvent('socket-connected'));
       });
       
       this.socket.on('disconnect', () => {
         console.log('Socket disconnected');
-        // Emit a global event that other components can listen for
         document.dispatchEvent(new CustomEvent('socket-disconnected'));
+      });
+      
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+        // Try to reconnect after a short delay
+        setTimeout(() => {
+          if (this.socket) {
+            this.socket.connect();
+          }
+        }, 2000);
       });
       
       this.socket.on('error', (error) => {
         console.error('Socket error:', error);
       });
       
-      this.socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
-      });
-      
       // Listen for process updates and broadcast them as custom events
       this.socket.on('process_update', (update) => {
         console.log('Process update received:', update);
-        // Broadcast the update as a custom event
         document.dispatchEvent(new CustomEvent('process-update', { detail: update }));
       });
     } else if (typeof io === 'undefined') {
@@ -48,6 +64,8 @@ class ApiService {
     
     return this.socket;
   }
+
+
 
   /**
    * Get available AI models
@@ -74,24 +92,9 @@ class ApiService {
     try {
       console.log(`Processing message with model: ${model}`);
       
-      // Initialize socket if not already done
-      this.initSocket();
-      
-      // Emit a process update event directly
-      if (this.socket && this.socket.connected) {
-        this.socket.emit('process_update', {
-          type: 'process',
-          message: `Processing query with ${model}: ${message.substring(0, 50)}...`
-        });
-      } else {
-        // Broadcast a custom event if socket is not available
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'process',
-            message: `Processing query with ${model}: ${message.substring(0, 50)}...`
-          }
-        }));
-      }
+      // Add a timeout to the fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       const response = await fetch(`${this.baseUrl}/process`, {
         method: 'POST',
@@ -99,7 +102,10 @@ class ApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ message, model }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -108,22 +114,6 @@ class ApiService {
       const data = await response.json();
       console.log('Response received:', data);
       
-      // Emit a process completion event
-      if (this.socket && this.socket.connected) {
-        this.socket.emit('process_update', {
-          type: 'process',
-          message: `Query processed successfully with ${model}`
-        });
-      } else {
-        // Broadcast a custom event if socket is not available
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'process',
-            message: `Query processed successfully with ${model}`
-          }
-        }));
-      }
-      
       return {
         content: data.content || data.message || JSON.stringify(data),
         model: data.model || model
@@ -131,25 +121,20 @@ class ApiService {
     } catch (error) {
       console.error(`Error processing message with ${model}:`, error);
       
-      // Emit an error event
-      if (this.socket && this.socket.connected) {
-        this.socket.emit('process_update', {
-          type: 'error',
-          message: `Error processing message: ${error.message}`
-        });
-      } else {
-        // Broadcast a custom event if socket is not available
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'error',
-            message: `Error processing message: ${error.message}`
-          }
-        }));
+      // Check if it's a network error
+      if (error.name === 'AbortError') {
+        return { error: 'Request timed out. The server took too long to respond.' };
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return { error: 'Network error. Please check if the server is running.' };
       }
       
       return { error: error.message };
     }
   }
+
+
+
+    
 
   /**
    * Generate code with an AI model
@@ -159,36 +144,19 @@ class ApiService {
    */
   async generateCode(prompt, model = 'auto') {
     try {
-      // Initialize socket if not already done
-      this.initSocket();
+      console.log(`Generating code with model: ${model}`);
       
-      // Emit process updates
-      if (this.socket && this.socket.connected) {
-        this.socket.emit('process_update', {
+      // Dispatch a process update event
+      document.dispatchEvent(new CustomEvent('process-update', {
+        detail: {
           type: 'process',
-          message: `Starting code generation for: ${prompt.substring(0, 50)}...`
-        });
-        
-        this.socket.emit('process_update', {
-          type: 'process',
-          message: 'Generating code...'
-        });
-      } else {
-        // Broadcast custom events if socket is not available
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'process',
-            message: `Starting code generation for: ${prompt.substring(0, 50)}...`
-          }
-        }));
-        
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'process',
-            message: 'Generating code...'
-          }
-        }));
-      }
+          message: `Starting code generation with ${model}: ${prompt.substring(0, 50)}...`
+        }
+      }));
+      
+      // Add a timeout to the fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for code generation
       
       const response = await fetch(`${this.baseUrl}/generate`, {
         method: 'POST',
@@ -196,7 +164,10 @@ class ApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ prompt, model }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -204,45 +175,38 @@ class ApiService {
       
       const data = await response.json();
       
-      // Emit completion update
-      if (this.socket && this.socket.connected) {
-        this.socket.emit('process_update', {
+      // Dispatch a process update event for completion
+      document.dispatchEvent(new CustomEvent('process-update', {
+        detail: {
           type: 'process',
           message: 'Code generation completed'
-        });
-      } else {
-        // Broadcast a custom event if socket is not available
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'process',
-            message: 'Code generation completed'
-          }
-        }));
-      }
+        }
+      }));
       
       return data;
     } catch (error) {
       console.error(`Error generating code with ${model}:`, error);
       
-      // Emit an error event
-      if (this.socket && this.socket.connected) {
-        this.socket.emit('process_update', {
+      // Dispatch an error event
+      document.dispatchEvent(new CustomEvent('process-update', {
+        detail: {
           type: 'error',
           message: `Error generating code: ${error.message}`
-        });
-      } else {
-        // Broadcast a custom event if socket is not available
-        document.dispatchEvent(new CustomEvent('process-update', { 
-          detail: {
-            type: 'error',
-            message: `Error generating code: ${error.message}`
-          }
-        }));
+        }
+      }));
+      
+      // Check if it's a network error
+      if (error.name === 'AbortError') {
+        return { error: 'Request timed out. The server took too long to respond.' };
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return { error: 'Network error. Please check if the server is running.' };
       }
       
       return { error: error.message };
     }
   }
+
+
 
   /**
    * Generate code with socket.io for real-time updates
@@ -319,6 +283,96 @@ class ApiService {
       return await response.json();
     } catch (error) {
       console.error(`Error fetching file ${filePath}:`, error);
+      return { error: error.message };
+    }
+  }
+
+
+
+
+
+
+
+
+
+    /**
+   * Start Auto-Pilot with project requirements
+   * @param {string} requirements - Project requirements
+   * @returns {Promise<Object>} Auto-Pilot status
+   */
+  async startAutoPilot(requirements) {
+    try {
+      const response = await fetch(`${this.baseUrl}/autopilot/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requirements }),
+      });
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error starting Auto-Pilot:', error);
+      return { error: error.message };
+    }
+  }
+
+  /**
+   * Get Auto-Pilot status
+   * @returns {Promise<Object>} Auto-Pilot status
+   */
+  async getAutoPilotStatus() {
+    try {
+      const response = await fetch(`${this.baseUrl}/autopilot/status`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting Auto-Pilot status:', error);
+      return { error: error.message };
+    }
+  }
+
+  /**
+   * Process next module in Auto-Pilot
+   * @returns {Promise<Object>} Module processing result
+   */
+  async processNextModule() {
+    try {
+      const response = await fetch(`${this.baseUrl}/autopilot/next`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error processing next module:', error);
+      return { error: error.message };
+    }
+  }
+
+  /**
+   * Pause Auto-Pilot
+   * @returns {Promise<Object>} Pause result
+   */
+  async pauseAutoPilot() {
+    try {
+      const response = await fetch(`${this.baseUrl}/autopilot/pause`, {
+        method: 'POST',
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error pausing Auto-Pilot:', error);
+      return { error: error.message };
+    }
+  }
+
+  /**
+   * Resume Auto-Pilot
+   * @returns {Promise<Object>} Resume result
+   */
+  async resumeAutoPilot() {
+    try {
+      const response = await fetch(`${this.baseUrl}/autopilot/resume`, {
+        method: 'POST',
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error resuming Auto-Pilot:', error);
       return { error: error.message };
     }
   }
